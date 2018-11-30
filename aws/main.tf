@@ -17,7 +17,7 @@ module "dcos" {
   num_public_agents   = "1"
 
   dcos_variant              = "ee"
-  dcos_version              = "1.11.5"
+  dcos_version              = "1.11.7"
   dcos_license_key_contents = "${file("./license.txt")}"
   dcos_install_mode         = "${var.dcos_install_mode}"
 
