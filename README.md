@@ -18,9 +18,10 @@ Example:
 Current `main.tf` uses the following defaults so it can be run directly out of the box:
 - 3 Masters, 2 Private Agents, 1 Public Agent
 - `~/.ssh/id_rsa.pub`
-- Random Cluster Name 
+- Accepting Cluster Name default (dcos-example)
 - Install mode
 - 1.11.7
+- Please provide your EE license as `./license.txt` in current directory
 
 Once we feel comfortable and we are ready to merge and release, we can uncomment original TF Registry source and remove ref.
 

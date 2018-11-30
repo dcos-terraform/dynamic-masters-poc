@@ -21,12 +21,15 @@ module "dcos" {
   dcos_license_key_contents = "${file("./license.txt")}"
   dcos_install_mode         = "${var.dcos_install_mode}"
 
-  #DC/OS Config values that must exist for S3 Backend
+  #DC/OS Config values that must be set
   dcos_exhibitor_explicit_keys   = "false"
   dcos_exhibitor_storage_backend = "aws_s3"
   dcos_s3_prefix                 = "exhibitor"
   dcos_s3_bucket                 = "ext-exhibitor-test"
-  dcos_aws_region                = "us-east-1a" #per aws_region: Must set aws_region, no way to calculate value.
+  dcos_aws_region                = "us-east-1" #per aws_region: Must set aws_region, no way to calculate value.
+  dcos_master_discovery         = "master_http_loadbalancer"
+  dcos_exhibitor_address        = "${module.dcos.masters-internal-loadbalancer}"
+  dcos_num_masters               = "3"
 }
 
 output "masters-ips" {
