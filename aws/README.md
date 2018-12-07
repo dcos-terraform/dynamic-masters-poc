@@ -28,6 +28,7 @@ Also see configuration reference for [`master_discovery`](https://docs.mesospher
 *On platforms like AWS where internal IPs are allocated dynamically, you should not use a static master list. If a master instance were to terminate for any reason, it could lead to cluster instability. It is recommended to use aws_s3 for the exhibitor storage backend since we can rely on s3 to manage quorum size when the master nodes are unavailable.
 
 
+
 ## Usage
 Pull down the repo and make desire adjustments to `main.tf`.
 
@@ -44,8 +45,13 @@ NOTE: This method takes a bit longer than normal to become available. Exhibitor 
 
 Taint the resources. (WORK IN PROGRESS)
 ```
+# Show all avail
+terraform state list
+
+# Taint resources accordinly.
 terraform taint -module dcos.dcos-install.dcos-masters-install null_resource.master1
 terraform taint -module dcos.dcos-infrastructure.dcos-master-instances.dcos-master-instances aws_instance.instance.0
+terraform taint -module dcos.dcos-infrastructure.dcos-master-instances.dcos-master-instances null_resource.instance-prereq.0
 ```
 
 Re-apply state.
@@ -53,6 +59,10 @@ Re-apply state.
 terraform plan -out plan.out 
 terraform apply plan.out
 ```
+
+## Current Findings
+See [FINDINGS](./FINDINGS.md) page.
+
 
 ## Tested Versions (CentOS 7.5)
 - 1.11.7 (successful)
