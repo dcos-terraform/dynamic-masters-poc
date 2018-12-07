@@ -1,7 +1,7 @@
 # Findings 
-The Goal is to create a cluster that consists of "replaceable" Master nodes. This should require minimal effort from the user perspective. Eliminating (tatinting) a master node should simply re-create/add a new master node to the DC/OS cluster with a simple `terraform apply`. This should include all necessary pre-reqs and installation of the Master role. 
+The Goal is to create a cluster that consists of "replaceable" Master nodes. This should require minimal effort from the user perspective. Eliminating (tainting) a master node should simply re-create/add a new master node to the DC/OS cluster with a simple `terraform apply` etc. This should include all necessary pre-reqs and installation of the Master role. 
 
-Currently in order to successfully replace a master node and have your state in a 'up-to-date' state, it requires the following steps:
+Currently in order to successfully replace a master node and have your Terraform state in a 'up-to-date' state, it requires the following steps:
 
 1) Taint the Master Instance Resource and the OS pre-reqs for the same Master Node. We must separate the OS pre-reqs and the Master installation. 
 
@@ -17,9 +17,9 @@ terraform plan -out plan.out
 terraform apply plan.out
 ```
 
-3) Taint the master3 null_resource to re-install the master role on the newly created instance. **NOTE: This will also try to recreate ALL underlying Agent null_resources as well. It will fail on the Agents which is expected and will be fixed in the next step.**
+3) Taint the master3 null_resource to re-install the master role on the newly created instance. **NOTE: This will also try to re-create ALL underlying Agent null_resources as well. It will fail on the Agents which is expected and will be fixed in the next step.**
 
-Also, to note here, this at times appears to be incosistent on the correct null_resource for the master installation. Sometimes master2 and others master1. 
+Also, to note here, this at times appears to be inconsistent on the correct null_resource for the master installation. Sometimes master2 and others master1. This caused pain.
 
 ```
 terraform taint -module dcos.dcos-install.dcos-masters-install null_resource.master3
@@ -31,7 +31,7 @@ terraform plan -out plan.out
 terraform apply plan.out
 ```
 
-5) Untaint ALL Agent null_resources. *This is not viable for large clusters. Example is for a 3 Node Cluster (2 Private and 1 Public)*
+5) Untaint ALL Agent null_resources from recent apply failures. *This is not viable for large clusters. Example is for a 3 Node Cluster (2 Private and 1 Public)*
 ```
 terraform untaint -module dcos.dcos-install.dcos-public-agents-install null_resource.public-agents
 terraform untaint -module dcos.dcos-install.dcos-private-agents-install null_resource.private-agents.1
@@ -41,9 +41,9 @@ terraform untaint -module dcos.dcos-install.dcos-private-agents-install null_res
 5) Ensure that the new Master joins the cluster via DC/OS UI etc.... 
 
 ## Conclusion
-As seen above, in our current setup with the dcos-install layer, it is not simple and is not user friendly. Due to the requirements needed for supporting intalling and upgrading clusters, it requires a multi-step approach and much attention from the user. It takes incredible amount of work to fix the state of Terraform which is dangerous.
+As seen above, in our current setup with the dcos-install layer, it is not simple and is not user friendly. Due to the requirements needed for supporting intalling and upgrading clusters, it requires a multi-step approach and much attention from the user. It takes incredible amount of work to not only replace a master but to also fix the state of Terraform which is dangerous.
 
-In our current setup, for the DC/OS Install layer, we install each Master one at a time and then install ALL the agents together at one time. From a Terraform perspective, in order to support installing each Master Node one at a time one after another and then install the agents, we had to create triggers for each null_resource based on the dependencies of completion of earlier null_resources. 
+In our current setup, for the DC/OS Install layer, we install each Master one at a time and then install ALL the agents together at one time. From a Terraform perspective, in order to support installing each Master Node one at a time one after another and then install the agents directly after, we had to create triggers for each null_resource based on the dependencies of completion of earlier null_resources. 
 
 Example:
 ```
@@ -53,16 +53,16 @@ resource "null_resource" "master2" {
   }
 ``` 
 
-So when we taint null_resource.master1 for example, it sets off a chain reaction to all underlying dependencies (master2 -> master3 -> Agents). Note this example is for 3 Masters. There would be more for clusters with more Master nodes. 
+So when we taint null_resource.master1 for example, it sets off a chain reaction and triggers all underlying dependencies (master2 -> master3 -> Agents). Note this example is for 3 Masters. There would be more for clusters with more Master nodes. 
 
-This is an unfortunate scenario resulting from using the bash style approach. We are currently limited on how we can support ALL types of install methods (Cluster Install, Cluster Upgrades and Node Replacements). 
+This is an unfortunate scenario resulting from using the bash style approach. We are currently limited on how we can support ALL types of install methods (Cluster Install, Cluster Upgrades, Node Replacements and whatever else may come up). 
 
 
-## Possible Options
+## Possible Options to resolve
 
-- Make our scripts "smarter". If cluster is installed, skip the install process all togther. 
-- Modify the way we currently handle DC/OS installation or add an additional method to support this.
-- Use a different install method such as a config management tool. 
+- Make our install scripts "smarter". If cluster is installed, skip the install process all togther. 
+- Modify the way we currently handle DC/OS installation or add an additional method to support master node replacement.
+- Use a different install method such as a config management tool to support this. 
 
 # Scenarios Tested
 ### Taint a Master
@@ -71,7 +71,7 @@ terraform taint -module dcos.dcos-infrastructure.dcos-master-instances.dcos-mast
 ```
 
 ##### Does the following:
-Recreate Master, Reads the Bootstrap, Modfies instances on the LB
+Re-create Master, Reads the Bootstrap, Modfies instances on the LB
 
 ```
 Terraform will perform the following actions:
@@ -136,7 +136,7 @@ Terraform will perform the following actions:
 Plan: 1 to add, 2 to change, 1 to destroy.
 ```
 
-This scenario simply destroys and recreates a master instance. Neither OS pre-reqs or DC/OS Master installation happens here. 
+This scenario simply destroys and re-creates a master instance. Neither OS pre-reqs or DC/OS Master installation happens here. 
 
 
 ### Taint Master Node and the Pre-reqs 
@@ -204,7 +204,7 @@ Re-creates Master Node and re-installs the OS pre-reqs.
 
 ```
 
-This scenario almost gets us there. We have successfully re-added the Master and installed all necessary OS stuff. We could simply fix this issue by requiring the instance ID as a trigger inside the null_resource for the instance module. So anytime the instance gets recreated, this null_resource will as well. 
+This scenario almost gets us there. We have successfully re-added the Master and installed all necessary OS stuff. We could simply fix this issue by requiring the instance ID as a trigger inside the null_resource for the instance module. So anytime the instance gets re-created, this null_resource will as well. 
 
 https://github.com/dcos-terraform/terraform-aws-instance/blob/master/main.tf#L74
 
@@ -225,7 +225,7 @@ terraform taint -module dcos.dcos-install.dcos-masters-install null_resource.mas
 ```
 
 ##### Does the following:
-Recreates Master instance, Install OS Pre-reqs and attempts to install the DC/OS Master role on new master(s) as well as install DC/OS on ALL Private Agents.
+Re-creates Master instance, Install OS Pre-reqs and attempts to install the DC/OS Master role on new master(s) as well as install DC/OS on ALL Private Agents.
 
 There are 2 issues with this scenario:
 
