@@ -8,7 +8,8 @@ data "http" "whatismyip" {
 }
 
 module "dcos" {
-  source  = "dcos-terraform/dcos/azurerm"
+  #source  = "dcos-terraform/dcos/azurerm"
+  source              = "git::https://github.com/dcos-terraform/terraform-azurem-dcos?ref=dynam-masters-poc"
   version = "~> 0.1"
 
   cluster_name        = "dcos-test"
