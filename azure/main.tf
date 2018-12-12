@@ -9,7 +9,7 @@ data "http" "whatismyip" {
 
 module "dcos" {
   #source  = "dcos-terraform/dcos/azurerm"
-  source              = "git::https://github.com/dcos-terraform/terraform-azurem-dcos?ref=dynam-masters-poc"
+  source              = "git::https://github.com/dcos-terraform/terraform-azurerm-dcos?ref=dynam-masters-poc"
   version = "~> 0.1"
 
   cluster_name        = "dcos-test"
@@ -37,7 +37,7 @@ module "dcos" {
   dcos_exhibitor_storage_backend        = "azure"
   dcos_exhibitor_azure_account_name     = ""
   dcos_exhibitor_azure_account_key      = ""
-  exhibitor_azure_prefix                = ""
+  dcos_exhibitor_azure_prefix           = ""
   dcos_master_discovery         = "master_http_loadbalancer"
   dcos_exhibitor_address        = "${module.dcos.masters-internal-loadbalancer}"
   dcos_num_masters               = "3"
