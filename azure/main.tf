@@ -9,20 +9,20 @@ data "http" "whatismyip" {
 
 module "dcos" {
   #source  = "dcos-terraform/dcos/azurerm"
-  source              = "git::https://github.com/dcos-terraform/terraform-azurerm-dcos?ref=dynam-masters-poc"
+  source  = "git::https://github.com/dcos-terraform/terraform-azurerm-dcos?ref=dynam-masters-poc"
   version = "~> 0.1"
 
-  cluster_name        = "dcos-test"
+  cluster_name        = "dcos-test${random_string.dcos_cluster_name.result}"
   ssh_public_key_file = "~/.ssh/id_rsa.pub"
   admin_ips           = ["${data.http.whatismyip.body}/32"]
   location            = "West US"
 
   num_masters        = "3"
-  num_private_agents = "2"
+  num_private_agents = "1"
   num_public_agents  = "1"
 
   tags = {
-    owner = "soak-infra-team"
+    owner      = "soak-infra-team"
     expiration = "2h"
   }
 
@@ -34,13 +34,19 @@ module "dcos" {
   dcos_install_mode = "${var.dcos_install_mode}"
 
   #DC/OS Config values that must be set
-  dcos_exhibitor_storage_backend        = "azure"
-  dcos_exhibitor_azure_account_name     = ""
-  dcos_exhibitor_azure_account_key      = ""
-  dcos_exhibitor_azure_prefix           = ""
-  dcos_master_discovery         = "master_http_loadbalancer"
-  dcos_exhibitor_address        = "${module.dcos.masters-internal-loadbalancer}"
-  dcos_num_masters               = "3"
+  dcos_exhibitor_storage_backend    = "azure"
+  dcos_exhibitor_azure_account_name = "dcosexhibitor"
+  dcos_exhibitor_azure_account_key  = "${module.dcos.azurem_storage_key}"
+  dcos_exhibitor_azure_prefix       = "exhibitor"
+  dcos_master_discovery             = "master_http_loadbalancer"
+  dcos_exhibitor_address            = "${module.dcos.masters-internal-loadbalancer}"
+  dcos_num_masters                  = "3"
+}
+
+resource "random_string" "dcos_cluster_name" {
+  length  = 6
+  special = false
+  upper   = false
 }
 
 output "masters-ips" {
