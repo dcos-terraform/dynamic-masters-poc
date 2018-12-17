@@ -159,6 +159,14 @@ At anytime, you can also check your see bucket/prefix and download the file and 
 ## Current Findings
 See [FINDINGS](./FINDINGS.md) page.
 
+## Room to Improve?
+- Keep the user from having to specify certain variables:
+
+    `dcos_exhibitor_storage_backend` - This will always be aws_s3 for aws
+
+    `dcos_s3_prefix` - should we set a default for this?
+
+    `dcos_exhibitor_address` - If bucket, backend, etc is set the use `${module.dcos.masters-internal-loadbalancer}`
 
 ## Tested Versions (CentOS 7.5)
 - 1.11.7 (successful)
