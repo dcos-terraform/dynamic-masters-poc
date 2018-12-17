@@ -153,6 +153,16 @@ At anytime, you can also check your see the storage account created (Storage Acc
 ## Current Findings
 See [FINDINGS](../aws/FINDINGS.md) page.
 
+## Room to Improve?
+- Keep the user from having to specify certain variables:
+
+    `dcos_exhibitor_azure_account_key` - If storage account, backend, etc is set then use `${module.dcos.azurem_storage_key}`
+
+    `dcos_exhibitor_azure_backend` - This will always be azure for Azure. 
+
+    `dcos_exhibitor_address` - If storage account, backend, etc is set then use `${module.dcos.masters-internal-loadbalancer}`
+
+    `dcos_exhibitor_azure_prefix` - should we set a default for this?
 
 ## Tested Versions (CentOS 7.5)
 - 1.11.7 (successful)
