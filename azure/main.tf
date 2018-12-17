@@ -17,7 +17,7 @@ module "dcos" {
   admin_ips           = ["${data.http.whatismyip.body}/32"]
   location            = "West US"
 
-  num_masters        = "4"
+  num_masters        = "3"
   num_private_agents = "1"
   num_public_agents  = "1"
 
