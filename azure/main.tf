@@ -17,13 +17,13 @@ module "dcos" {
   admin_ips           = ["${data.http.whatismyip.body}/32"]
   location            = "West US"
 
-  num_masters        = "3"
+  num_masters        = "4"
   num_private_agents = "1"
   num_public_agents  = "1"
 
   tags = {
     owner      = "soak-infra-team"
-    expiration = "2h"
+    expiration = "4h"
   }
 
   dcos_version = "1.12.0"
@@ -43,6 +43,7 @@ module "dcos" {
   dcos_num_masters                  = "3"
 }
 
+# This is a current work around to an issue with CloudCleaner. A new Cluster name must be created each time.
 resource "random_string" "dcos_cluster_name" {
   length  = 6
   special = false
