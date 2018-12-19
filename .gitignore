@@ -71,7 +71,7 @@ $RECYCLE.BIN/
 *.tfvars
 *terraform-aws-*
 *terraform-azure-*
-*terraform-azurem-*
+*terraform-azurerm-*
 
 ### DCOS ###
 *license.txt
