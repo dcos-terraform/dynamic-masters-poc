@@ -62,7 +62,7 @@ module "dcos-infrastructure" {
 
 module "dcos-ansible-bridge" {
   #source               = "dcos-terraform/dcos-ansible-bridge/localfile"
-  source               = "/Users/westonbassler/Documents/git-repos/dynamic-masters-poc/ansible/terraform-localfile-dcos-ansible-bridge"
+  source               = "git::https://github.com/dcos-terraform/terraform-localfile-dcos-ansible-bridge?ref=dynam-masters-poc"
   bootstrap_ip         = "${module.dcos-infrastructure.bootstrap.public_ip}"
   master_ips           = ["${module.dcos-infrastructure.masters.public_ips}"]
   private_agent_ips    = ["${module.dcos-infrastructure.private_agents.public_ips}"]
