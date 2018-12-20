@@ -3,7 +3,7 @@ This repo utilizes the infrastructure module for both `./aws` or `./azure` and c
 
 The following repo required changes to the following repo:
 
-- [`terraform-localfile-dcos-ansible-bridge](https://github.com/dcos-terraform/terraform-localfile-dcos-ansible-bridge/tree/dynam-masters-poc)
+- [`terraform-localfile-dcos-ansible-bridge`](https://github.com/dcos-terraform/terraform-localfile-dcos-ansible-bridge/tree/dynam-masters-poc)
 
 Please use the provided `main.tf` and Ansible files for your desired Provider (`./aws` or `./azure`).
 
