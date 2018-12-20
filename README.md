@@ -1,5 +1,5 @@
 # PoC for Adding "Dynamic Masters" ability to DC/OS Terraform
-This repo is being used as the PoC placeholder for sharing feedback, ideas, and results for adding the feature of being able to [replace a master](https://docs.mesosphere.com/1.12/administering-clusters/replacing-a-master-node/) into DC/OS Terraform. This is a feature only available within AWS and Azure currently which you can see is broken into sub folders `./aws` and `./azure`. Provider specifics will be provided in its own README.
+This repo is being used as the PoC placeholder for sharing feedback, ideas, and results for adding the feature of being able to [replace a master](https://docs.mesosphere.com/1.12/administering-clusters/replacing-a-master-node/) into DC/OS Terraform. This is a feature only available within AWS and Azure currently which you can see is broken into sub folders `./ansible`,`./aws` and `./azure`. Provider specifics will be provided in its own README.
 
 For More information on this Feature, please visit the [docs.mesosphere.com](https://docs.mesosphere.com/1.12/administering-clusters/replacing-a-master-node/) page for more details. 
 
