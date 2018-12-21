@@ -115,3 +115,7 @@ output "public_agents" {
   value       = "${join("\n", flatten(list(module.dcos-infrastructure.public_agents.public_ips)))}"
 }
 
+output "cluster-url" {
+  description = "DC/OS UI URL"
+  value       = "${module.dcos-infrastructure.elb.masters_dns_name}"
+}
