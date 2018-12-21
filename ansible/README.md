@@ -171,3 +171,18 @@ Dec 17 16:48:27 master-4-dcos-test1d38gb mesos-master[7839]: [INFO] ensure_zk_pa
 At anytime, you can also check your see bucket/prefix and download the file and view its contents. See [example](../exhibitor-file.example).
 
 You can repeat the process of tainting and re-creating a master as many times as you would like. Note that in this setup ONLY 1 Master can be replaced at a time!
+
+When finished, destroy all the things. Currently you will have to manually delete the S3 bucket.
+
+```
+terraform destroy
+```
+
+## Current Findings
+
+
+## Room to Improve?
+
+
+## Tested Versions (CentOS 7.5)
+- 1.12.0 (successful)
