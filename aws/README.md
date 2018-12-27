@@ -240,7 +240,7 @@ Dec 17 16:48:27 master-4-dcos-test1d38gb mesos-master[7839]: [INFO] ensure_zk_pa
 ...
 ```
 
-7) The Agent Node(s) installs will fail and you will need to untaint the resources to finally get your Terraform state back. You can use the for loop to clean it up:
+7) The Agent Node(s) install will fail and you will need to untaint the resources to finally get your Terraform state back. You can use the for loop to clean it up:
 ```
 for i in `terraform state list | grep agents-install.null_resource` ; do echo $i | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g' | xargs terraform untaint -module ; done
 ```

@@ -23,7 +23,7 @@ dcos_num_masters
 Also see configuration reference for [`master_discovery`](https://docs.mesosphere.com/1.12/installing/production/advanced-configuration/configuration-reference/#master-discovery-required) and [`exhibitor_storage_backend`](https://docs.mesosphere.com/1.12/installing/production/advanced-configuration/configuration-reference/#exhibitor-storage-backend) for more details.
 
 ## Usage
-Pull down the repo. 
+1) Pull down the repo. 
 ```
 mkdir dynamic-masters && \
 cd dynamic-masters && \
@@ -31,7 +31,7 @@ git clone git@github.com:dcos-terraform/dynamic-masters-poc.git && \
 cd azure
 ```
 
-Add values to the following variables in your `main.tf`
+2) Add values to the following variables in your `main.tf`
 ```
 dcos_exhibitor_storage_backend
 dcos_exhibitor_azure_account_name
@@ -53,12 +53,12 @@ Example:
   dcos_num_masters                  = "3"
 ```            
 
-Create a file called `license.key` with your Enterprise license key.
+3) Create a file called `license.key` with your Enterprise license key.
 ```
 echo 'YOUR-DCOS-LICENSE-asbad-1343x' > license.key
 ```
 
-Issue the following Terraform Commands to have Terraform build your cluster.
+4) Issue the following Terraform Commands to have Terraform build your cluster.
 ```
 az login
 export ARM_SUBSCRIPTOION_ID="Your_Tenant_ID_alnsdfhls12345"
@@ -70,7 +70,7 @@ terraform apply plan.out
 
 *NOTE: This method takes a bit longer than normal to become available. Exhibitor and Mesos Masters will have to restart several times before they are ready. Typically takes an additional 5-6 minutes before UI is ready.*
 
-Taint the appropriate resources. Currently this will need to be done in 2 separate steps: The Instance and Prereqs resource and then the DC/OS Master install resource. *THIS IS STILL A WORK IN PROGRESS. PLEASE SEE [FINDINGS](../aws/FINDINGS.md) for more details.*
+5) Taint the appropriate resources. Currently this will need to be done in 2 separate steps: The Instance and Prereqs resource and then the DC/OS Master install resource. *THIS IS STILL A WORK IN PROGRESS. PLEASE SEE [FINDINGS](../aws/FINDINGS.md) for more details.*
 
 The following shows how we perform this for the Master 1 node. 
 
@@ -97,7 +97,7 @@ terraform apply plan.out
 
 *This will destroy the Master node, create a new one and then reinstall the prereqs. You will eventually see the Master node go unhealthy and then disappear from the DC/OS UI.*
 
-Once the prereqs are completed you will need to taint the Master's DC/OS install resource. This part is tricky currently due to the way that we currently provision and upgrade our DC/OS clusters with the DC/OS Install module. Since each Master Node is installed one at a time and then the Agent Nodes simaltaneously, certain parts of the process will fail due to DC/OS already being installed on the node. This is fine and when this happens, you can `untaint` the current resource to move on. 
+6) Once the prereqs are completed you will need to taint the Master's DC/OS install resource. This part is tricky currently due to the way that we currently provision and upgrade our DC/OS clusters with the DC/OS Install module. Since each Master Node is installed one at a time and then the Agent Nodes simaltaneously, certain parts of the process will fail due to DC/OS already being installed on the node. This is fine and when this happens, you can `untaint` the current resource to move on. 
 
 Example:
 ```
@@ -231,7 +231,7 @@ Dec 17 16:48:27 master-4-dcos-test1d38gb mesos-master[7839]: [INFO] ensure_zk_pa
 ...
 ```
 
-The Agent Node(s) installs will fail and you will need to untaint the resources to finally get your Terraform state back. You can use the for loop to clean it up:
+7) The Agent Node(s) install will fail and you will need to untaint the resources to finally get your Terraform state back. You can use the for loop to clean it up:
 ```
 for i in `terraform state list | grep agents-install.null_resource` ; do echo $i | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g' | xargs terraform untaint -module ; done
 ```
