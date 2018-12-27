@@ -94,10 +94,8 @@ terraform state list
 ```
 # Taint Master 1 Instance and Prereqs. 
 echo module.dcos.module.dcos-infrastructure.module.dcos-master-instances.module.dcos-master-instances.aws_instance.instance[0] | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g' | xargs terraform taint -module
-The resource aws_instance.instance.0 in the module root.dcos.dcos-infrastructure.dcos-master-instances.dcos-master-instances has been marked as tainted!
 
 echo module.dcos.module.dcos-infrastructure.module.dcos-master-instances.module.dcos-master-instances.null_resource.instance-prereq[0] | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g' | xargs terraform taint -module
-The resource null_resource.instance-prereq.0 in the module root.dcos.dcos-infrastructure.dcos-master-instances.dcos-master-instances has been marked as tainted!
 ```
 
 Re-apply state.
@@ -134,13 +132,11 @@ above and apply again to incrementally change your infrastructure.
 Untaint the resource and move on!
 ```
 echo module.dcos.module.dcos-install.module.dcos-masters-install.null_resource.master1 | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g'| xargs terraform untaint -module
-The resource null_resource.master1 in the module root.dcos.dcos-install.dcos-masters-install has been successfully untainted!
 ```
 
 Let's taint Master 1 master install resource and begin from there:
 ```
 echo module.dcos.module.dcos-install.module.dcos-masters-install.null_resource.master1 | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g'| xargs terraform taint -module
-The resource null_resource.master1 in the module root.dcos.dcos-install.dcos-masters-install has been marked as tainted!
 ```
 
 Re-apply state.
@@ -149,7 +145,7 @@ terraform plan -out plan.out
 terraform apply plan.out
 ```
 
-As mentioned, if the install fails due to DC/OS already being installed, just **untaint** that resource.
+As mentioned, if the install fails due to DC/OS already being installed, just **untaint** that resource and move on.
 
 **The Fun Part!** Once you find the correct Master to run the install on, you can actually watch DC/OS Replace the older Master Node with the new! During the Master install on the new master, login and tail the journal for the `dcos-exhibitor` service (It might take a sec for this service to appear depending on where the install process is).
 
@@ -246,10 +242,7 @@ Dec 17 16:48:27 master-4-dcos-test1d38gb mesos-master[7839]: [INFO] ensure_zk_pa
 
 The Agent Node(s) installs will fail and you will need to untaint the resources to finally get your Terraform state back. You can use the for loop to clean it up:
 ```
-for i in `terraform state list | grep agents-install.null_resource` ; do echo $i | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g' | xargs terraform taint -module ; done
-The resource null_resource.private-agents.0 in the module root.dcos.dcos-install.dcos-private-agents-install has been marked as tainted!
-The resource null_resource.private-agents.1 in the module root.dcos.dcos-install.dcos-private-agents-install has been marked as tainted!
-The resource null_resource.public-agents in the module root.dcos.dcos-install.dcos-public-agents-install has been marked as tainted!
+for i in `terraform state list | grep agents-install.null_resource` ; do echo $i | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g' | xargs terraform untaint -module ; done
 ```
 
 At anytime, you can also check your see bucket/prefix and download the file and view its contents. See [example](../exhibitor-file.example).
