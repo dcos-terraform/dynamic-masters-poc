@@ -30,8 +30,46 @@ Also see configuration reference for [`master_discovery`](https://docs.mesospher
 
 
 ## Usage
-Pull down the repo and make desire adjustments to `main.tf`. Also, drop your license key as `license.key`.
+Pull down the repo. 
+```
+mkdir dynamic-masters && \
+cd dynamic-masters && \
+git clone git@github.com:dcos-terraform/dynamic-masters-poc.git && \
+cd aws
+```
 
+Add values to the following variables in your `main.tf`
+```
+dcos_exhibitor_explicit_keys
+dcos_exhibitor_storage_backend
+dcos_s3_prefix                
+dcos_s3_bucket                
+dcos_aws_region               
+dcos_master_discovery         
+dcos_exhibitor_address        
+dcos_num_masters
+```
+
+Example:
+```
+  dcos_exhibitor_explicit_keys   = "false"
+  dcos_exhibitor_storage_backend = "aws_s3"
+  dcos_s3_prefix                 = "exhibitor"
+  dcos_s3_bucket                 = "ext-exhibitor-test"
+  dcos_aws_region                = "us-east-1" 
+  dcos_master_discovery          = "master_http_loadbalancer"
+  dcos_exhibitor_address         = "${module.dcos.masters-internal-loadbalancer}" #This is the LB we create with the wrapper script
+  dcos_num_masters               = "3"
+```
+
+NOTE: We automatically create IAM Profiles and the S3 bucket based on the values set above. There is no need to use Secret and Access keys. 
+
+Create a file called `license.key` with your Enterprise license key.
+```
+echo 'YOUR-DCOS-LICENSE-asbad-1343x' > license.key
+```
+
+Issue the following Terraform Commands to have Terraform build your cluster.
 ```
 eval $(maws li account)
 export AWS_DEFAULT_REGION="us-east-1"
@@ -41,17 +79,25 @@ terraform plan -out plan.out
 terraform apply plan.out
 ```
 
-NOTE: This method takes a bit longer than normal to become available. Exhibitor and Mesos Masters will have to restart several times before they are ready. Typically takes an additional 5-6 minutes before UI is ready.
+*NOTE: This method takes a bit longer than normal to become available. Exhibitor and Mesos Masters will have to restart several times before they are ready. Typically takes an additional 5-6 minutes before UI is ready.*
 
-Taint the resources. (WORK IN PROGRESS) PLEASE SEE [FINDINGS](./FINDINGS.md)
+Taint the appropriate resources. Currently this will need to be done in 2 separate steps: The Instance and Prereqs resource and then the DC/OS Master install resource. *THIS IS STILL A WORK IN PROGRESS. PLEASE SEE [FINDINGS](./FINDINGS.md) for more details.*
+
+The following shows how we perform this for the Master 1 node. 
+
+Pro Tip, you can use the following one-liner to help taint resources. You can use this to taint any resources from the output of:
+
 ```
-# Show all avail
 terraform state list
+```
 
-# Taint resources accordinly. 
-terraform taint -module dcos.dcos-install.dcos-masters-install null_resource.master1
-terraform taint -module dcos.dcos-infrastructure.dcos-master-instances.dcos-master-instances aws_instance.instance.0
-terraform taint -module dcos.dcos-infrastructure.dcos-master-instances.dcos-master-instances null_resource.instance-prereq.0
+```
+# Taint Master 1 Instance and Prereqs. 
+echo module.dcos.module.dcos-infrastructure.module.dcos-master-instances.module.dcos-master-instances.aws_instance.instance[0] | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g' | xargs terraform taint -module
+The resource aws_instance.instance.0 in the module root.dcos.dcos-infrastructure.dcos-master-instances.dcos-master-instances has been marked as tainted!
+
+echo module.dcos.module.dcos-infrastructure.module.dcos-master-instances.module.dcos-master-instances.null_resource.instance-prereq[0] | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g' | xargs terraform taint -module
+The resource null_resource.instance-prereq.0 in the module root.dcos.dcos-infrastructure.dcos-master-instances.dcos-master-instances has been marked as tainted!
 ```
 
 Re-apply state.
@@ -60,7 +106,52 @@ terraform plan -out plan.out
 terraform apply plan.out
 ```
 
-**The Fun Part!** You can actually watch DC/OS Replace the older Master Node with the new! During the Master install on the new master, login and tail the journal for the `dcos-exhibitor` service (It might take a sec for this service to appear depending on where the install process is).
+*This will destroy the Master node, create a new one and then reinstall the prereqs. You will eventually see the Master node go unhealthy and then disappear from the DC/OS UI.*
+
+Once the prereqs are completed you will need to taint the Master's DC/OS install resource. This part is tricky currently due to the way that we currently provision and upgrade our DC/OS clusters with the DC/OS Install module. Since each Master Node is installed one at a time and then the Agent Nodes simaltaneously, certain parts of the process will fail due to DC/OS already being installed on the node. This is fine and when this happens, you can `untaint` the current resource to move on. 
+
+Example:
+```
+module.dcos.module.dcos-install.module.dcos-masters-install.null_resource.master1 (remote-exec): Checking if DC/OS is already installed: FAIL (Currently installed)
+
+module.dcos.module.dcos-install.module.dcos-masters-install.null_resource.master1 (remote-exec): Found an existing DC/OS installation. To reinstall DC/OS on this this machine you must
+module.dcos.module.dcos-install.module.dcos-masters-install.null_resource.master1 (remote-exec): first uninstall DC/OS then run dcos_install.sh. To uninstall DC/OS, follow the product
+module.dcos.module.dcos-install.module.dcos-masters-install.null_resource.master1 (remote-exec): documentation provided with DC/OS.
+
+
+Error: Error applying plan:
+
+1 error(s) occurred:
+
+* module.dcos.module.dcos-install.module.dcos-masters-install.null_resource.master1: error executing "/tmp/terraform_948165397.sh": Process exited with status 1
+
+Terraform does not automatically rollback in the face of errors.
+Instead, your Terraform state file has been partially updated with
+any resources that successfully completed. Please address the error
+above and apply again to incrementally change your infrastructure.
+```
+
+Untaint the resource and move on!
+```
+echo module.dcos.module.dcos-install.module.dcos-masters-install.null_resource.master1 | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g'| xargs terraform untaint -module
+The resource null_resource.master1 in the module root.dcos.dcos-install.dcos-masters-install has been successfully untainted!
+```
+
+Let's taint Master 1 master install resource and begin from there:
+```
+echo module.dcos.module.dcos-install.module.dcos-masters-install.null_resource.master1 | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g'| xargs terraform taint -module
+The resource null_resource.master1 in the module root.dcos.dcos-install.dcos-masters-install has been marked as tainted!
+```
+
+Re-apply state.
+```
+terraform plan -out plan.out 
+terraform apply plan.out
+```
+
+As mentioned, if the install fails due to DC/OS already being installed, just **untaint** that resource.
+
+**The Fun Part!** Once you find the correct Master to run the install on, you can actually watch DC/OS Replace the older Master Node with the new! During the Master install on the new master, login and tail the journal for the `dcos-exhibitor` service (It might take a sec for this service to appear depending on where the install process is).
 
 ```
 sudo journalctl -fu dcos-exhibitor
@@ -151,6 +242,14 @@ Dec 17 16:48:27 master-4-dcos-test1d38gb mesos-master[7839]: [INFO] ensure_zk_pa
 ...
 ...
 ...
+```
+
+The Agent Node(s) installs will fail and you will need to untaint the resources to finally get your Terraform state back. You can use the for loop to clean it up:
+```
+for i in `terraform state list | grep agents-install.null_resource` ; do echo $i | sed 's/module\.//g;s/\(.*\)\.\(.*\.\)/\1\ \2/;s/]//g;s/\[/\./g' | xargs terraform taint -module ; done
+The resource null_resource.private-agents.0 in the module root.dcos.dcos-install.dcos-private-agents-install has been marked as tainted!
+The resource null_resource.private-agents.1 in the module root.dcos.dcos-install.dcos-private-agents-install has been marked as tainted!
+The resource null_resource.public-agents in the module root.dcos.dcos-install.dcos-public-agents-install has been marked as tainted!
 ```
 
 At anytime, you can also check your see bucket/prefix and download the file and view its contents. See [example](../exhibitor-file.example).
