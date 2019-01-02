@@ -33,10 +33,11 @@ module "dcos" {
 
   dcos_install_mode = "${var.dcos_install_mode}"
 
+  
   #DC/OS Config values that must be set
   dcos_exhibitor_storage_backend    = "azure"
   dcos_exhibitor_azure_account_name = "dcosexhibitor"
-  dcos_exhibitor_azure_account_key  = "${module.dcos.azurem_storage_key}"
+  dcos_exhibitor_azure_account_key  = "${module.dcos.azurerm_storage_key}"
   dcos_exhibitor_azure_prefix       = "exhibitor"
   dcos_master_discovery             = "master_http_loadbalancer"
   dcos_exhibitor_address            = "${module.dcos.masters-internal-loadbalancer}"
